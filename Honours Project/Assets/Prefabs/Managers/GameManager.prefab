@@ -1,0 +1,171 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4707009468195129989
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4707009468195129990}
+  - component: {fileID: 4707009468195129991}
+  - component: {fileID: 4707009468195129984}
+  - component: {fileID: 4707009468847855583}
+  - component: {fileID: 4707009468847855582}
+  - component: {fileID: 4483020759563210055}
+  - component: {fileID: 649769079215087783}
+  - component: {fileID: 5024908232272770889}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4707009468195129990
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4707009468195129991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3d826ccbc5e5d34abe40912f4f19d25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  overviewCameraStart: {fileID: 0}
+  audioListener: {fileID: 0}
+  infoText: {fileID: 0}
+  playerSpawnArea: {fileID: 0}
+  matchStartTime: 5
+  playerReference: {fileID: 0}
+--- !u!114 &4707009468195129984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 0
+  OwnershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  InstantiationId: 1
+  isRuntimeInstantiated: 0
+--- !u!114 &4707009468847855583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9593bfcf42b9eb4ba21e5a39ca57385, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joinGamePanel: {fileID: 0}
+  playerNameLabel: {fileID: 0}
+  playerPingLabel: {fileID: 0}
+  playerKillsLabel: {fileID: 0}
+  playerDeathLabel: {fileID: 0}
+  gameManager: {fileID: 4707009468195129991}
+  sensitivity: 0
+  showMenu: 0
+--- !u!114 &4707009468847855582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a37deeb2b4afa24aae1f9ac64c5cca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxMessages: 10
+  hideChatTime: 7
+  messageCharacterLimit: 300
+  chatGUI: {fileID: 11400000, guid: 06440791cc09c0340946ee33dcde5e0f, type: 2}
+  menu: {fileID: 4707009468847855583}
+--- !u!114 &4483020759563210055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9452564dc5f6df54a8c686fdf25d286b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomName: 
+  maxPlayers: 0
+  playerCount: 0
+  isVisible: 0
+  isOpen: 0
+  mapName: 
+--- !u!114 &649769079215087783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a37deeb2b4afa24aae1f9ac64c5cca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxMessages: 10
+  hideChatTime: 7
+  messageCharacterLimit: 300
+  chatGUI: {fileID: 11400000, guid: 06440791cc09c0340946ee33dcde5e0f, type: 2}
+  menu: {fileID: 4707009468847855583}
+--- !u!114 &5024908232272770889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4707009468195129989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ce8488b3a2c0e1498b64f9528feb88f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waveNumber: {fileID: 0}
+  gameOverWaveNumber: {fileID: 0}
+  waveCompleted: {fileID: 0}
+  spawningWave: {fileID: 0}
+  waveCount: 0
+  waves: []
+  spawnPoints: []
+  timeBetweenWaves: 5
