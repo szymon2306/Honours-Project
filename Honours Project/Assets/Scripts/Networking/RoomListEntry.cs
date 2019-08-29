@@ -1,35 +1,36 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+using ExitGames.Client.Photon;
 using Photon.Pun;
 
 
 public class RoomListEntry : MonoBehaviour
-{
-    public Text RoomNameText;
-    public Text RoomPlayersText;
-    public Button JoinRoomButton;
-
-    private string roomName;
-
-    public void Start()
     {
-        JoinRoomButton.onClick.AddListener(() =>
+        public Text RoomNameText;
+        public Text RoomPlayersText;
+        public Button JoinRoomButton;
+
+        private string roomName;
+
+        public void Start()
         {
-            if (PhotonNetwork.InLobby)
+            JoinRoomButton.onClick.AddListener(() =>
             {
-                PhotonNetwork.LeaveLobby();
-            }
+                if (PhotonNetwork.InLobby)
+                {
+                    PhotonNetwork.LeaveLobby();
+                }
 
-            PhotonNetwork.JoinRoom(roomName);
-        });
-    }
+                PhotonNetwork.JoinRoom(roomName);
+            });
+        }
 
-    public void Initialize(string name, byte currentPlayers, byte maxPlayers)
-    {
-        roomName = name;
+        public void Initialize(string name, byte currentPlayers, byte maxPlayers)
+        {
+            roomName = name;
 
             RoomNameText.text = name;
-        RoomPlayersText.text = currentPlayers + " / " + maxPlayers;
+            RoomPlayersText.text = currentPlayers + " / " + maxPlayers;
+        }
     }
-}

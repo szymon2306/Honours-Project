@@ -30,8 +30,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     [Header("Create Room Panel")]
     public GameObject createRoomPanel;
 
-    public InputField roomNameInputField;
-    public InputField maxPlayersInputField;
+    public TMP_InputField roomNameInput;
+    public TMP_Dropdown maxPlayersDropdown;
     public TMP_Dropdown selectedMapDropdown;
 
     [Header("Join Random Room Panel")]
@@ -72,8 +72,12 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     // Maximum number of players for each room
     // Could be increased if players can spectate, etc
-    [Range(0, 4)]
-    public int maxPlayers = 4;
+    //[Range(0, 4)]
+    public int[] maxPlayers;
+	int players = 2;
+
+	public string[] gameLevelList;
+	int gameLevelIndex;
 
     // Connection status
     public string connectionStatus = "";
@@ -98,10 +102,21 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public static string[] colorList = new string[] { "Black", "White", "Red", "Green", "Blue" };
     public static Color[] colors = new Color[] { new Color(0.09f, 0.09f, 0.09f, 1), new Color(1, 1, 1, 1), new Color(1, 0.14f, 0.14f, 1), new Color(0, 1, 0, 1), new Color(0, 0.67f, 1, 1) };
 
+	public TextMeshProUGUI playerNumberText;
+	public TextMeshProUGUI gameLevelText;
+
+
+	[Header("Room Info UI Reference")]
+	public TextMeshProUGUI roomNameText;
+	public TextMeshProUGUI maxPlayersText;
+	public TextMeshProUGUI selectedMapText;
+
+
 
     // Initialize network view on Awake
     private void Awake()
     {
+		/*
         if (_instance == null)
         {
             _instance = this;
@@ -112,6 +127,11 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             Destroy(gameObject);
             return;
         }
+
+		*/
+
+		// Set login panel to be active on awake in case it would not be for any reason
+		loginPanel.SetActive(true);
 
         playerNameText.text = "";
 
@@ -212,7 +232,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         string roomName = "Room " + Random.Range(1000, 10000);
 
-        RoomOptions options = new RoomOptions { MaxPlayers = 8 };
+        RoomOptions options = new RoomOptions { MaxPlayers = 4 };
 
         PhotonNetwork.CreateRoom(roomName, options, null);
     }
@@ -271,7 +291,12 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         SetActivePanel(insideRoomPanel.name);
 
-        if (playerListEntries == null)
+		// Update Lobby Info once player joined room
+		roomNameText.text = PhotonNetwork.CurrentRoom.Name;
+		maxPlayersText.text = PhotonNetwork.CurrentRoom.PlayerCount + " of " + PhotonNetwork.CurrentRoom.MaxPlayers;
+		selectedMapText.text = gameLevelList[gameLevelIndex];
+
+		if (playerListEntries == null)
         {
             playerListEntries = new Dictionary<int, GameObject>();
         }
@@ -467,25 +492,43 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnCreateRoomButtonClicked()
     {
-        string roomName = roomNameInputField.text;
-        roomName = (roomName.Equals(string.Empty)) ? "Room " + Random.Range(1000, 10000) : roomName;
+		//roomNameInput.text = "Room" + Random.Range(1000, 10000); //made-up room name
+		string roomName = roomNameInput.text;
+        roomName = (roomName.Equals(string.Empty)) ? "Room " + Random.Range(1000, 10000) : roomName;		
 
-        byte maxPlayers;
-        byte.TryParse(maxPlayersInputField.text, out maxPlayers);
-        maxPlayers = (byte)Mathf.Clamp(maxPlayers, 2, 4);
+		// New room settings
+		RoomOptions newRoomOptions = new RoomOptions();
+		newRoomOptions.IsOpen = true;
+		newRoomOptions.IsVisible = true;
 
-        RoomOptions options = new RoomOptions { MaxPlayers = maxPlayers };
+		newRoomOptions.MaxPlayers = (byte)maxPlayers[players];
 
-        PhotonNetwork.CreateRoom(roomName, options, null);
-    }
+		// Custom Room Properties
+		newRoomOptions.CustomRoomProperties = new Hashtable();
+		newRoomOptions.CustomRoomProperties.Add("gameLevel", gameLevelList[gameLevelIndex]);
 
-    public void ChangeSelectedMap()
+		PhotonNetwork.CreateRoom(roomName, newRoomOptions, null);
+	}
+
+	public void ChangeMaxPlayers(int index)
+	{
+		playerNumberText.text = maxPlayers[index].ToString(); // Testing purposes
+		players = index;
+
+		//PhotonNetwork.CurrentRoom.MaxPlayers
+
+		Debug.Log("Max players in this lobby is now: " + players);
+
+	}
+
+	public void ChangeSelectedMap(int index)
     {
-        // logic for changing selected map from dropdown
+		// logic for changing selected map from dropdown
 
+		gameLevelText.text = gameLevelList[index]; // Testing purposes
+		gameLevelIndex = index;
 
-
-    }
+	}
 
     public void OnJoinRandomRoomButtonClicked()
     {
@@ -587,20 +630,11 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CurrentRoom.IsOpen = true;
         PhotonNetwork.CurrentRoom.IsVisible = true;
 
-        // Load testing scene level
-        PhotonNetwork.LoadLevel("Testing_Scene_01");
+		PhotonNetwork.LoadLevel(gameLevelList[gameLevelIndex]);
 
-        /*
-        if (selectedMapDropdown.Equals("Level_01"))
-        {
-            PhotonNetwork.LoadLevel("Level_01");
-        }
-        if (selectedMapDropdown.Equals("Testing_Scene_01"))
-        {
-            PhotonNetwork.LoadLevel("Testing_Scene_01");
-        }
-        */
-    }
+		// Load testing scene level
+		//PhotonNetwork.LoadLevel("Testing_Scene_01");
+	}
 
 
 

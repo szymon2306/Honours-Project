@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 4707009468847855583}
   - component: {fileID: 4707009468847855582}
   - component: {fileID: 4483020759563210055}
-  - component: {fileID: 649769079215087783}
   - component: {fileID: 5024908232272770889}
   m_Layer: 0
   m_Name: GameManager
@@ -132,23 +131,6 @@ MonoBehaviour:
   isVisible: 0
   isOpen: 0
   mapName: 
---- !u!114 &649769079215087783
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4707009468195129989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a37deeb2b4afa24aae1f9ac64c5cca9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxMessages: 10
-  hideChatTime: 7
-  messageCharacterLimit: 300
-  chatGUI: {fileID: 11400000, guid: 06440791cc09c0340946ee33dcde5e0f, type: 2}
-  menu: {fileID: 4707009468847855583}
 --- !u!114 &5024908232272770889
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,6 +148,54 @@ MonoBehaviour:
   waveCompleted: {fileID: 0}
   spawningWave: {fileID: 0}
   waveCount: 0
-  waves: []
+  waves:
+  - name: 
+    enemyOne: {fileID: 0}
+    enemyTwo: {fileID: 0}
+    enemyThree: {fileID: 0}
+    enemyFour: {fileID: 0}
+    enemyFive: {fileID: 0}
+    count: 0
+    rate: 0
+  - name: 
+    enemyOne: {fileID: 0}
+    enemyTwo: {fileID: 0}
+    enemyThree: {fileID: 0}
+    enemyFour: {fileID: 0}
+    enemyFive: {fileID: 0}
+    count: 0
+    rate: 0
+  - name: 
+    enemyOne: {fileID: 0}
+    enemyTwo: {fileID: 0}
+    enemyThree: {fileID: 0}
+    enemyFour: {fileID: 0}
+    enemyFive: {fileID: 0}
+    count: 0
+    rate: 0
+  - name: 
+    enemyOne: {fileID: 0}
+    enemyTwo: {fileID: 0}
+    enemyThree: {fileID: 0}
+    enemyFour: {fileID: 0}
+    enemyFive: {fileID: 0}
+    count: 0
+    rate: 0
+  - name: 
+    enemyOne: {fileID: 0}
+    enemyTwo: {fileID: 0}
+    enemyThree: {fileID: 0}
+    enemyFour: {fileID: 0}
+    enemyFive: {fileID: 0}
+    count: 0
+    rate: 0
+  - name: 
+    enemyOne: {fileID: 0}
+    enemyTwo: {fileID: 0}
+    enemyThree: {fileID: 0}
+    enemyFour: {fileID: 0}
+    enemyFive: {fileID: 0}
+    count: 0
+    rate: 0
   spawnPoints: []
   timeBetweenWaves: 5

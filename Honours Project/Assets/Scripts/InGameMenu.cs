@@ -82,8 +82,13 @@ public class InGameMenu : MonoBehaviour
     public void DisconnectButton()
     {
         PhotonNetwork.Disconnect();
-
         //networkManager.Disconnect();
+    }
+
+
+    public void LeaveCurrentRoomButton()
+    {
+        PhotonNetwork.LeaveRoom();
     }
 
     public void PlayerList()

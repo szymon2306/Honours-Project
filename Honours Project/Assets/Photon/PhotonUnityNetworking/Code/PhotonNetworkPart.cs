@@ -181,10 +181,14 @@ namespace Photon.Pun
         private static float _levelLoadingProgress = 0f;
 
         /// <summary>
-        /// Gets the networked level loading progress. Value will be be zero until the first loading, and remain at one in between loadings
-        /// Use PhotonNetwork.LoadLevel() to initiate a networked level Loading
+        /// Represents the scene loading progress when using LoadLevel().
         /// </summary>
-        /// <value>The level loading progress. Ranges from 0 to 1</value>
+        /// <remarks>
+        /// The value is 0 if the app never loaded a scene with LoadLevel().</br>
+        /// During async scene loading, the value is between 0 and 1.</br>
+        /// Once any scene completed loading, it stays at 1 (signaling "done").</br>
+        /// </remarks>
+        /// <value>The level loading progress. Ranges from 0 to 1.</value>
         public static float LevelLoadingProgress
         {
             get
@@ -206,7 +210,7 @@ namespace Photon.Pun
         /// Called when "this client" left a room to clean up.
         /// </summary>
         /// <remarks>
-        /// if (Server == ServerConnection.GameServer && (state == ClientState.Disconnecting || state == ClientState.DisconnectingFromGameserver))
+        /// if (Server == ServerConnection.GameServer && (state == ClientState.Disconnecting || state == ClientState.DisconnectingFromGameServer))
         /// </remarks>
         private static void LeftRoomCleanup()
         {
@@ -1262,13 +1266,13 @@ namespace Photon.Pun
         {
             if (loadingLevelAndPausedNetwork)
             {
-                if (_AsyncLevelLoadingOperation != null)
-                {
-                    _AsyncLevelLoadingOperation = null;
-                }
-
+                _AsyncLevelLoadingOperation = null;
                 loadingLevelAndPausedNetwork = false;
                 PhotonNetwork.IsMessageQueueRunning = true;
+            }
+            else
+            {
+                PhotonNetwork.SetLevelInPropsIfSynced(SceneManagerHelper.ActiveSceneName);
             }
 
             // Debug.Log("OnLevelWasLoaded photonViewList.Count: " + photonViewList.Count); // Exit Games internal log
@@ -1595,7 +1599,7 @@ namespace Photon.Pun
             PhotonView view = GetPhotonView(viewID);
             if (view == null)
             {
-                Debug.LogWarning("Received OnSerialization for view ID " + viewID + ". We have no such PhotonView! Ignored this if you're leaving a room. State: " + NetworkingClient.State);
+                Debug.LogWarning("Received OnSerialization for view ID " + viewID + ". We have no such PhotonView! Ignored this if you're joining or leaving a room. State: " + NetworkingClient.State);
                 return;
             }
 
@@ -1877,6 +1881,7 @@ namespace Photon.Pun
             return false;
         }
 
+
         /// <summary>Internally used to detect the current scene and load it if PhotonNetwork.AutomaticallySyncScene is enabled.</summary>
         internal static void LoadLevelIfSynced()
         {
@@ -1909,6 +1914,7 @@ namespace Photon.Pun
             }
         }
 
+
         internal static void SetLevelInPropsIfSynced(object levelId)
         {
             if (!PhotonNetwork.AutomaticallySyncScene || !PhotonNetwork.IsMasterClient || PhotonNetwork.CurrentRoom == null)
@@ -1921,46 +1927,46 @@ namespace Photon.Pun
                 return;
             }
 
-            // Cancel existing loading is already taking place
+
+            // check if "current level" is already set in the room properties (then we don't set it again)
+            if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CurrentSceneProperty))
+            {
+                object levelIdInProps = PhotonNetwork.CurrentRoom.CustomProperties[CurrentSceneProperty];
+               //Debug.Log("levelId (to set): "+ levelId + " levelIdInProps: " + levelIdInProps + " SceneManagerHelper.ActiveSceneName: "+ SceneManagerHelper.ActiveSceneName);
+
+                if (levelId.Equals(levelIdInProps))
+                {
+                    //Debug.LogWarning("The levelId equals levelIdInProps. Don't set property again.");
+                    return;
+                }
+                else
+                {
+                    // if the new levelId does not equal the level in properties, there is a chance that build index and scene name refer to the same scene.
+                    // as Unity does not provide all scenes with build index, we only check for the currently loaded scene (with a high chance this is the correct one).
+                    int scnIndex = SceneManagerHelper.ActiveSceneBuildIndex;
+                    string scnName = SceneManagerHelper.ActiveSceneName;
+                    
+                    if ((levelId.Equals(scnIndex) && levelIdInProps.Equals(scnName)) || (levelId.Equals(scnName) && levelIdInProps.Equals(scnIndex)))
+                    {
+                        //Debug.LogWarning("The levelId and levelIdInProps refer to the same scene. Don't set property for it.");
+                        return;
+                    }
+                }
+            }
+
+
+            // if the new levelId does not match the current room-property, we can cancel existing loading (as we start a new one)
             if (_AsyncLevelLoadingOperation != null)
             {
+                if (!_AsyncLevelLoadingOperation.isDone)
+                {
+                    Debug.LogWarning("PUN cancels an ongoing async level load, as another scene should be loaded. Next scene to load: " + levelId);
+                }
+
                 _AsyncLevelLoadingOperation.allowSceneActivation = false;
                 _AsyncLevelLoadingOperation = null;
             }
 
-            // check if "current level" is already set in props
-            if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CurrentSceneProperty))
-            {
-
-                object levelIdInProps = PhotonNetwork.CurrentRoom.CustomProperties[CurrentSceneProperty];
-
-                // check if scene already active
-                if (levelIdInProps is int && SceneManagerHelper.ActiveSceneBuildIndex == (int)levelIdInProps)
-                {
-                    return;
-                }
-
-                if (levelIdInProps is string && SceneManagerHelper.ActiveSceneName != null && SceneManagerHelper.ActiveSceneName.Equals((string)levelIdInProps))
-                {
-                    return;
-                }
-
-                if (_AsyncLevelLoadingOperation != null)
-                {
-                    // check if the key is different
-                    bool _cancelCurrentloading = false;
-
-                    _cancelCurrentloading = (levelIdInProps is int) && (levelId is int) && (int)levelId != (int)levelIdInProps;
-                    _cancelCurrentloading = _cancelCurrentloading || ((levelIdInProps is string) && (levelId is string) && (string)levelId != (string)levelIdInProps);
-
-                    if (_cancelCurrentloading)
-                    {
-                        _AsyncLevelLoadingOperation.allowSceneActivation = false;
-                        _AsyncLevelLoadingOperation = null;
-                    }
-                }
-
-            }
 
             // current level is not yet in props, or different, so this client has to set it
             Hashtable setScene = new Hashtable();
@@ -1969,22 +1975,17 @@ namespace Photon.Pun
             else Debug.LogError("Parameter levelId must be int or string!");
 
             PhotonNetwork.CurrentRoom.SetCustomProperties(setScene);
-
-            SendAllOutgoingCommands(); // send immediately! because: in most cases the client will begin to load and not send for a while
+            SendAllOutgoingCommands(); // send immediately! because: in most cases the client will begin to load and pause sending anything for a while
         }
 
 
         private static void OnEvent(EventData photonEvent)
         {
-            int actorNr = 0;
+            int actorNr = photonEvent.Sender;
             Player originatingPlayer = null;
-            if (photonEvent.Parameters.ContainsKey(ParameterCode.ActorNr))
+            if (actorNr > 0 && NetworkingClient.CurrentRoom != null)
             {
-                actorNr = (int) photonEvent[ParameterCode.ActorNr];
-                if (NetworkingClient.CurrentRoom != null)
-                {
-                    originatingPlayer = NetworkingClient.CurrentRoom.GetPlayer(actorNr);
-                }
+                originatingPlayer = NetworkingClient.CurrentRoom.GetPlayer(actorNr);
             }
 
             switch (photonEvent.Code)
@@ -1993,7 +1994,7 @@ namespace Photon.Pun
                     ResetPhotonViewsOnSerialize();
                     break;
                 case PunEvent.RPC:
-                    ExecuteRpc(photonEvent[ParameterCode.Data] as Hashtable, originatingPlayer);
+                    ExecuteRpc(photonEvent.CustomData as Hashtable, originatingPlayer);
                     break;
 
                 case PunEvent.SendSerialize:
@@ -2030,7 +2031,7 @@ namespace Photon.Pun
                     break;
 
                 case PunEvent.Instantiation:
-                    NetworkInstantiate((Hashtable) photonEvent[ParameterCode.Data], originatingPlayer);
+                    NetworkInstantiate((Hashtable) photonEvent.CustomData, originatingPlayer);
                     break;
 
                 case PunEvent.CloseConnection:
@@ -2048,7 +2049,7 @@ namespace Photon.Pun
                     break;
 
                 case PunEvent.DestroyPlayer:
-                    Hashtable evData = (Hashtable) photonEvent[ParameterCode.Data];
+                    Hashtable evData = (Hashtable) photonEvent.CustomData;
                     int targetPlayerId = (int) evData[(byte) 0];
                     if (targetPlayerId >= 0)
                     {
@@ -2070,7 +2071,7 @@ namespace Photon.Pun
                     break;
 
                 case PunEvent.Destroy:
-                    evData = (Hashtable) photonEvent[ParameterCode.Data];
+                    evData = (Hashtable) photonEvent.CustomData;
                     int instantiationId = (int) evData[(byte) 0];
                     // Debug.Log("Ev Destroy for viewId: " + instantiationId + " sent by owner: " + (instantiationId / PhotonNetwork.MAX_VIEW_IDS == actorNr) + " this client is owner: " + (instantiationId / PhotonNetwork.MAX_VIEW_IDS == this.LocalPlayer.ID));
 
@@ -2089,7 +2090,7 @@ namespace Photon.Pun
 
                 case PunEvent.OwnershipRequest:
                 {
-                    int[] requestValues = (int[]) photonEvent.Parameters[ParameterCode.CustomEventContent];
+                    int[] requestValues = (int[])photonEvent.CustomData;
                     int requestedViewId = requestValues[0];
                     int requestedFromOwnerId = requestValues[1];
 
@@ -2153,7 +2154,7 @@ namespace Photon.Pun
 
                 case PunEvent.OwnershipTransfer:
                 {
-                    int[] transferViewToUserID = (int[]) photonEvent.Parameters[ParameterCode.CustomEventContent];
+                    int[] transferViewToUserID = (int[])photonEvent.CustomData;
                     int requestedViewId = transferViewToUserID[0];
                     int newOwnerId = transferViewToUserID[1];
 
@@ -2196,6 +2197,12 @@ namespace Photon.Pun
                             Debug.Log("PUN got region list. Going to ping minimum regions, based on this previous result summary: "+previousBestRegionSummary);
                         }
                         NetworkingClient.RegionHandler.PingMinimumOfRegions(OnRegionsPinged, previousBestRegionSummary);
+                    }
+                    break;
+                case OperationCode.JoinGame:
+                    if (Server == ServerConnection.GameServer)
+                    {
+                        PhotonNetwork.LoadLevelIfSynced();
                     }
                     break;
             }

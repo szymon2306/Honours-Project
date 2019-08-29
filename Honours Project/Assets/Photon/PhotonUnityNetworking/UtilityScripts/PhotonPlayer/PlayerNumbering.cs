@@ -71,12 +71,13 @@ namespace Photon.Pun.UtilityScripts
             {
                 GameObject.DestroyImmediate(instance.gameObject);
             }
-
+            /*
             instance = this;
             if (dontDestroyOnLoad)
             { 
-                //DontDestroyOnLoad(this.gameObject);
+                DontDestroyOnLoad(this.gameObject);
             }
+            */
 
             this.RefreshData();
         }

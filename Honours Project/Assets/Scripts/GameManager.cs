@@ -18,6 +18,12 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public Transform playerSpawnArea;
 
+    int savedFund = 0;
+    public int spawnedPlayers = 0;
+    [SerializeField] int alives = 0;
+
+    GameObject player;
+
     // Match start timer, set to 5 second by default
     public float matchStartTime = 5;
 
@@ -39,8 +45,63 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    [PunRPC]
+    void RPCSyncUserSpawned()
+    {
+        spawnedPlayers++;
+        alives++;
 
-        public void Start()
+        if (spawnedPlayers == PhotonNetwork.PlayerList.Length)
+        {
+            RefreshPlayerIndicators();
+        }
+
+        photonView.RPC("RPCSyncAlives", RpcTarget.Others, alives);
+    }
+
+    [PunRPC]
+    void RPCSyncAlives(int alives)
+    {
+        this.alives = alives;
+    }
+
+    void RefreshPlayerIndicators()
+    {
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (GameObject player in players)
+        {
+            player.GetComponent<PlayerMine>().StartCreateIndicators();
+        }
+    }
+
+    public void RevivePlayers()
+    {
+        RefreshPlayerIndicators();
+        photonView.RPC("RPCRevivePlayers", RpcTarget.Others);
+    }
+
+    [PunRPC]
+    void RPCRevivePlayers()
+    {
+        if (player == null)
+        {
+            Destroy(GameObject.FindWithTag("Inspector"));
+
+            savedFund += (PhotonNetwork.PlayerList.Length * 100);
+
+            SpawnPlayer();
+            player.GetComponent<FundSystem>().AddFund(savedFund);
+
+            LevelSystem levelSystem = player.GetComponent<LevelSystem>();
+
+            savedFund = 0;
+        }
+
+        RefreshPlayerIndicators();
+    }
+
+    public void Start()
     {
         PhotonNetwork.IsMessageQueueRunning = true;
 
@@ -60,6 +121,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // run Start Game
         //StartGame();
+    }
+
+    public void SaveFund(int amount)
+    {
+        savedFund = amount;
     }
 
     //Start Game Function

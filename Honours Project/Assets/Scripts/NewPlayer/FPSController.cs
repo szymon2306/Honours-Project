@@ -206,7 +206,7 @@ public class FPSController : MonoBehaviour
             run = false;
         }
 
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.LeftControl))
         {
             CheckDistance();
 

@@ -64,7 +64,7 @@ namespace Photon.Pun
     public static partial class PhotonNetwork
     {
         /// <summary>Version number of PUN. Used in the AppVersion, which separates your playerbase in matchmaking.</summary>
-        public const string PunVersion = "2.8";
+        public const string PunVersion = "2.13";
 
         /// <summary>Version number of your game. Setting this updates the AppVersion, which separates your playerbase in matchmaking.</summary>
         /// <remarks>
@@ -126,6 +126,9 @@ namespace Photon.Pun
         private const string PlayerPrefsKey = "PUNCloudBestRegion";
 
         /// <summary>Used to store and access the "Best Region Summary" in the Player Preferences.</summary>
+        /// <remarks>
+        /// Set this value to null before you connect, to discard the previously selected Best Region for the client.
+        /// </remarks>
         public static string BestRegionSummaryInPreferences
         {
             get
@@ -195,7 +198,7 @@ namespace Photon.Pun
         /// This is the lower level connection state. Keep in mind that PUN uses more than one server,
         /// so the client may become Disconnected, even though it's just switching servers.
         ///
-        /// While OfflineMode is true, this is ClientState.Joined (after create/join) or ConnectedToMasterserver in all other cases.
+        /// While OfflineMode is true, this is ClientState.Joined (after create/join) or ConnectedToMasterServer in all other cases.
         /// </remarks>
         public static ClientState NetworkClientState
         {
@@ -203,7 +206,7 @@ namespace Photon.Pun
             {
                 if (OfflineMode)
                 {
-                    return (offlineModeRoom != null) ? ClientState.Joined : ClientState.ConnectedToMasterserver;
+                    return (offlineModeRoom != null) ? ClientState.Joined : ClientState.ConnectedToMasterServer;
                 }
 
                 if (NetworkingClient == null)
@@ -435,15 +438,22 @@ namespace Photon.Pun
         private static Room offlineModeRoom = null;
 
 
-        /// <summary>Defines if all clients in a room should load the same level as the Master Client (if that used PhotonNetwork.LoadLevel).</summary>
+        /// <summary>Defines if all clients in a room should automatically load the same level as the Master Client.</summary>
         /// <remarks>
-        /// To synchronize the loaded level, the Master Client should use PhotonNetwork.LoadLevel.
-        /// All clients will load the new scene immediately when they enter a room (even before the callback OnJoinedRoom) or on change.
+        /// When enabled, clients load the same scene that is active on the Master Client.
+        /// When a client joins a room, the scene gets loaded even before the callback OnJoinedRoom gets called.
         ///
-        /// Internally, a Custom Room Property is set for the loaded scene. When a client reads that
-        /// and is not in the same scene yet, it will immediately pause the Message Queue
-        /// (PhotonNetwork.IsMessageQueueRunning = false) and load. When the scene finished loading,
-        /// PUN will automatically re-enable the Message Queue.
+        /// To synchronize the loaded level, the Master Client should use PhotonNetwork.LoadLevel, which
+        /// notifies the other clients before starting to load the scene.
+        /// If the Master Client loads a level directly via Unity's API, PUN will notify the other players after
+        /// the scene loading completed (using SceneManager.sceneLoaded).
+        /// 
+        /// Internally, a Custom Room Property is set for the loaded scene. On change, clients use LoadLevel
+        /// if they are not in the same scene.
+        ///
+        /// Note that this works only for a single active scene and that reloading the scene is not supported.
+        /// The Master Client will actually reload a scene but other clients won't.
+        /// To get everyone to reload, the game can send an RPC or event to trigger the loading.
         /// </remarks>
         public static bool AutomaticallySyncScene
         {
@@ -536,7 +546,7 @@ namespace Photon.Pun
             }
         }
 
-        private static int sendFrequency = 50; // in miliseconds.
+        private static int sendFrequency = 50; // in milliseconds.
 
         /// <summary>
         /// Defines how many times per second OnPhotonSerialize should be called on PhotonViews.
@@ -568,10 +578,10 @@ namespace Photon.Pun
             }
         }
 
-        private static int serializationFrequency = 100; // in miliseconds. I.e. 100 = 100ms which makes 10 times/second
+        private static int serializationFrequency = 100; // in milliseconds. I.e. 100 = 100ms which makes 10 times/second
 
         /// <summary>
-        /// Can be used to pause dispatching of incoming evtents (RPCs, Instantiates and anything else incoming).
+        /// Can be used to pause dispatching of incoming events (RPCs, Instantiates and anything else incoming).
         /// </summary>
         /// <remarks>
         /// While IsMessageQueueRunning == false, the OnPhotonSerializeView calls are not done and nothing is sent by
@@ -819,10 +829,6 @@ namespace Photon.Pun
         /// <summary>
         /// The count of rooms currently in use (available on MasterServer in 5sec intervals).
         /// </summary>
-        /// <remarks>
-        /// While inside the lobby you can also check the count of listed rooms as: PhotonNetwork.GetRoomList().Length.
-        /// Since PUN v1.25 this is only based on the statistic event Photon sends (counting all rooms).
-        /// </remarks>
         public static int CountOfRooms
         {
             get
@@ -991,13 +997,13 @@ namespace Photon.Pun
                                                     {
 														if ( 
 															(previousState == ClientState.Joined && state == ClientState.Disconnected) || 
-															(Server == ServerConnection.GameServer && (state == ClientState.Disconnecting || state == ClientState.DisconnectingFromGameserver))
+															(Server == ServerConnection.GameServer && (state == ClientState.Disconnecting || state == ClientState.DisconnectingFromGameServer))
 															)
 														{
 										                	LeftRoomCleanup();
 														}
 
-                                                        if (state == ClientState.ConnectedToMasterserver && _cachedRegionHandler != null)
+                                                        if (state == ClientState.ConnectedToMasterServer && _cachedRegionHandler != null)
                                                         {
                                                             BestRegionSummaryInPreferences = _cachedRegionHandler.SummaryToCache;
                                                             _cachedRegionHandler = null;
@@ -1035,7 +1041,7 @@ namespace Photon.Pun
         /// <summary>Connect to Photon as configured in the PhotonServerSettings file.</summary>
         /// <remarks>
         /// Implement IConnectionCallbacks, to make your game logic aware of state changes.
-        /// Especially, IConnectionCallbacks.ConnectedToMasterserver is useful to react when
+        /// Especially, IConnectionCallbacks.ConnectedToMasterServer is useful to react when
         /// the client can do matchmaking.
         ///
         /// This method will disable OfflineMode (which won't destroy any instantiated GOs) and it
@@ -1911,8 +1917,7 @@ namespace Photon.Pun
 
         /// <summary>On MasterServer this joins the default lobby which list rooms currently in use.</summary>
         /// <remarks>
-        /// The room list is sent and refreshed by the server. You can access this cached list by
-        /// PhotonNetwork.GetRoomList().
+        /// The room list is sent and refreshed by the server using <see cref="ILobbyCallbacks.OnRoomListUpdate"/>.
         ///
         /// Per room you should check if it's full or not before joining. Photon also lists rooms that are
         /// full, unless you close and hide them (room.open = false and room.visible = false).
@@ -1937,8 +1942,7 @@ namespace Photon.Pun
 
         /// <summary>On a Master Server you can join a lobby to get lists of available rooms.</summary>
         /// <remarks>
-        /// The room list is sent and refreshed by the server. You can access this cached list by
-        /// PhotonNetwork.GetRoomList().
+        /// The room list is sent and refreshed by the server using <see cref="ILobbyCallbacks.OnRoomListUpdate"/>.
         ///
         /// Any client can "make up" any lobby on the fly. Splitting rooms into multiple lobbies will
         /// keep each list shorter. However, having too many lists might ruin the matchmaking experience.
@@ -2193,7 +2197,7 @@ namespace Photon.Pun
         /// <summary>
         /// Allocates a viewID for the current/local player.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if a viewId was assigned. False if the PhotonView already had a non-zero viewID.</returns>
         public static bool AllocateViewID(PhotonView view)
         {
             if (view.ViewID != 0)
@@ -2207,11 +2211,10 @@ namespace Photon.Pun
             return true;
         }
 
-
         /// <summary>
-        /// Enables the Master Client to allocate a viewID that is valid for scene objects.
+        /// Enables the Master Client to allocate a viewID for scene objects.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if a viewId was assigned. False if the PhotonView already had a non-zero viewID or if this client is not the Master Client.</returns>
         public static bool AllocateSceneViewID(PhotonView view)
         {
             if (!PhotonNetwork.IsMasterClient)
@@ -2231,9 +2234,25 @@ namespace Photon.Pun
             return true;
         }
 
-        // use 0 for scene-targetPhotonView-ids
-        // returns viewID (combined owner and sub id)
-        private static int AllocateViewID(int ownerId)
+        /// <summary>Allocates a viewID for the current/local player or the scene.</summary>
+        /// <param name="sceneObject">Use true, to allocate a scene viewID and false to allocate a viewID for the local player.</param>
+        /// <returns>Returns a viewID (combined owner and sequential number) that can be assigend as PhotonView.ViewID.</returns>
+        public static int AllocateViewID(bool sceneObject)
+        {
+            if (sceneObject && !LocalPlayer.IsMasterClient)
+            {
+                Debug.LogError("Only a Master Client can AllocateViewID() for scene objects. This client/player is not a Master Client. Returning an invalid viewID: -1.");
+                return 0;
+            }
+
+            int ownerActorNumber = sceneObject ? 0 : LocalPlayer.ActorNumber;
+            return AllocateViewID(ownerActorNumber);
+        }
+
+        /// <summary>Allocates a viewID for the current/local player or the scene.</summary>
+        /// <param name="ownerId">ActorNumber to allocate a viewID for.</param>
+        /// <returns>Returns a viewID (combined owner and sequential number) that can be assigend as PhotonView.ViewID.</returns>
+        public static int AllocateViewID(int ownerId)
         {
             if (ownerId == 0)
             {
@@ -2596,7 +2615,7 @@ namespace Photon.Pun
         /// <returns>Nothing. Check error debug log for any issues.</returns>
         public static void DestroyPlayerObjects(Player targetPlayer)
         {
-            if (LocalPlayer == null)
+            if (targetPlayer == null)
             {
                 Debug.LogError("DestroyPlayerObjects() failed, cause parameter 'targetPlayer' was null.");
             }
@@ -2818,24 +2837,30 @@ namespace Photon.Pun
         }
 
 
-        /// <summary>Wraps loading a level to pause the network message-queue. Optionally syncs the loaded level in a room.</summary>
+        /// <summary>This method wraps loading a level asynchronously and pausing network messages during the process.</summary>
         /// <remarks>
-        /// To sync the loaded level in a room, set PhotonNetwork.AutomaticallySyncScene to true.
+        /// While loading levels in a networked game, it makes sense to not dispatch messages received by other players.
+        /// LoadLevel takes care of that by setting PhotonNetwork.IsMessageQueueRunning = false until the scene loaded.
+        /// 
+        /// To sync the loaded level in a room, set PhotonNetwork.AutomaticallySyncScene to true. 
         /// The Master Client of a room will then sync the loaded level with every other player in the room.
-        ///
-        /// While loading levels, it makes sense to not dispatch messages received by other players.
-        /// This method takes care of that by setting PhotonNetwork.IsMessageQueueRunning = false and enabling
-        /// the queue when the level was loaded.
+        /// Note that this works only for a single active scene and that reloading the scene is not supported.
+        /// The Master Client will actually reload a scene but other clients won't.
         ///
         /// You should make sure you don't fire RPCs before you load another scene (which doesn't contain
-        /// the same GameObjects and PhotonViews). You can call this in OnJoinedRoom.
+        /// the same GameObjects and PhotonViews).
         ///
-        /// This uses SceneManager.LoadSceneAsync().
+        /// LoadLevel uses SceneManager.LoadSceneAsync().
         ///
-        /// Check the progress of the LevelLoading using PhotonNetwork.LevelLoadingProgress (-1 means no loading, then it ranges from 0 to 1)
+        /// Check the progress of the LevelLoading using PhotonNetwork.LevelLoadingProgress.
+        /// 
+        /// Calling LoadLevel before the previous scene finished loading is not recommended.
+        /// If AutomaticallySyncScene is enabled, PUN cancels the previous load (and prevent that from
+        /// becoming the active scene). If AutomaticallySyncScene is off, the previous scene loading can finish.
+        /// In both cases, a new scene is loaded locally.
         /// </remarks>
         /// <param name='levelNumber'>
-        /// Number of the level to load. When using level numbers, make sure they are identical on all clients.
+        /// Build-index number of the level to load. When using level numbers, make sure they are identical on all clients.
         /// </param>
         public static void LoadLevel(int levelNumber)
         {
@@ -2849,21 +2874,27 @@ namespace Photon.Pun
             _AsyncLevelLoadingOperation = SceneManager.LoadSceneAsync(levelNumber,LoadSceneMode.Single);
         }
 
-        /// <summary>Wraps loading a level to pause the network message-queue. Optionally syncs the loaded level in a room.</summary>
+        /// <summary>This method wraps loading a level asynchronously and pausing network messages during the process.</summary>
         /// <remarks>
-        /// While loading levels, it makes sense to not dispatch messages received by other players.
-        /// This method takes care of that by setting PhotonNetwork.IsMessageQueueRunning = false and enabling
-        /// the queue when the level was loaded.
-        ///
-        /// To sync the loaded level in a room, set PhotonNetwork.AutomaticallySyncScene to true.
+        /// While loading levels in a networked game, it makes sense to not dispatch messages received by other players.
+        /// LoadLevel takes care of that by setting PhotonNetwork.IsMessageQueueRunning = false until the scene loaded.
+        /// 
+        /// To sync the loaded level in a room, set PhotonNetwork.AutomaticallySyncScene to true. 
         /// The Master Client of a room will then sync the loaded level with every other player in the room.
+        /// Note that this works only for a single active scene and that reloading the scene is not supported.
+        /// The Master Client will actually reload a scene but other clients won't.
         ///
         /// You should make sure you don't fire RPCs before you load another scene (which doesn't contain
-        /// the same GameObjects and PhotonViews). You can call this in OnJoinedRoom.
+        /// the same GameObjects and PhotonViews).
         ///
-        /// This uses SceneManager.LoadSceneAsync().
+        /// LoadLevel uses SceneManager.LoadSceneAsync().
         ///
-        /// Check the progress of the LevelLoading using PhotonNetwork.LevelLoadingProgress (-1 means no loading, then it ranges from 0 to 1)
+        /// Check the progress of the LevelLoading using PhotonNetwork.LevelLoadingProgress.
+        /// 
+        /// Calling LoadLevel before the previous scene finished loading is not recommended.
+        /// If AutomaticallySyncScene is enabled, PUN cancels the previous load (and prevent that from
+        /// becoming the active scene). If AutomaticallySyncScene is off, the previous scene loading can finish.
+        /// In both cases, a new scene is loaded locally.
         /// </remarks>
         /// <param name='levelName'>
         /// Name of the level to load. Make sure it's available to all clients in the same room.

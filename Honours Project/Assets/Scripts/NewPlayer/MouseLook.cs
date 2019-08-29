@@ -18,7 +18,15 @@ public class MouseLook : MonoBehaviour
     public float maximumY;
     float rotationY;
 	InGameMenu menu = null;
-	
+
+    private float recoil = 0.0f;
+
+    public void StartRecoil(float recoilParam)
+    {
+        // in seconds
+        recoil = recoilParam;
+    }
+
     void Start()
     {
       menu = InGameMenu.instance;
